@@ -1,6 +1,6 @@
 ---
 title: "Biomass_DBH_allometry"
-format: docx
+format: gfm
 editor: visual
 ---
 
@@ -54,11 +54,16 @@ biomass_ancova <- anova(biomass_lm)
 biomass_ancova
 ```
 
+```{r echo=FALSE}
+p_clone <- round(biomass_ancova$`Pr(>F)`[2],3)
+p_interaction <- round(biomass_ancova$`Pr(>F)`[3],3)
+```
+
 จากผลการวิเคราะห์ข้างต้น แสดงให้เห็นว่า
 
--   ความแตกต่างระหว่าง clone ไม่มีนัยสำคัญที่ P = `` r round(biomass_ancova$`Pr(>F)`[2],3) ``
+-   ความแตกต่างระหว่าง clone ไม่มีนัยสำคัญที่ P = `r p_clone`
 
--   ปฏิสัมพันธ์ระหว่าง D2H:clone ไม่มีนัยสำคัญที่ P = `` r round(biomass_ancova$`Pr(>F)`[3],3) ``
+-   ปฏิสัมพันธ์ระหว่าง D2H:clone ไม่มีนัยสำคัญที่ P = `r p_interaction`
 
 ดังนั้นข้อมูลจาก clone ทั้ง 4 ไม่มีความแตกต่างกันอย่างมนัยสำคัญ สามารถรวมข้อมูลเพื่อผลิตสมการเดียวกันได้เลย โดยจะได้สมการดังต่อไปนี้
 
