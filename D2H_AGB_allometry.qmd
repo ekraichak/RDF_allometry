@@ -1,0 +1,88 @@
+---
+title: "Biomass_DBH_allometry"
+format: docx
+editor: visual
+---
+
+## 1. บทนำ
+
+ในการวิเคราะห์นี้จะพยายามอธิบายความสัมพันธ์ระหว่าง D2H และ AGB ว่าแตกต่างกันหรือไม่ระหว่าง clone
+
+-   ถ้าแตกต่างกัน จะต้องใช้สมการ allometry แตกต่างกันระหว่าง clone
+
+-   ถ้าไม่แตกต่างกัน สามารถใช้ข้อมูลร่วมกันเพื่อสร้าง allometry เดียวได้เลย
+
+## 2. นำข้อและอธิบายข้อมูล
+
+ข้อมูลจากทางกรมป่าไม้ แสดงค่าของต้นไม้จำนวน 4 clone โดยวัดค่าต่อไปนี้
+
+-   DBH = เส้นผ่านศูนย์กลางเพียงอก (diameter at breast height) หน่วย cm
+
+-   H = ค่าความสูง (height) หน่วย m
+
+-   D2H = ค่า DBH ยกกำลังสอง คูณด้วยค่า H หน่วย $cm^2m$
+
+-   AGB = มวลชีวภาพเหนือพื้นดิน (Aboveground biomass) หน่วย kg
+
+```{r}
+library(tidyverse)
+library(readxl)
+
+biomass <- read_excel("allometry_RDF.xlsx")
+biomass
+```
+
+## 3. วิเคราะห์ความแตกต่างของความชันระหว่างพื้นที่
+
+เริ่มต้นจากการวาดภาพเพื่อแสดงความสัมพันธ์ระหว่าง D2H และ AGB ว่าแตกต่างกันหรือไม่ระหว่าง clone
+
+```{r}
+biomass %>% 
+  ggplot(aes(x = D2H, y = AGB, color = factor(clone))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = F) +
+  labs(color = "clone")
+```
+
+จะเส้นว่าความชันของแต่ละเส้นนั้น ไม่แตกต่างกันมา ยกเว้น clone 3 ที่อาจจะชันกว่า clone อื่น ๆ เล็กน้อย
+
+เราสามารถวิเคราะห์ว่า slope มีความแตกต่างกันจริงหรือไม่ระหว่าง clone โดยการทำ Analysis of Covariance (ANCOVA) ซึ่งถ้า slope แตกต่างกันจริง ค่าสัมประสิทธิ์ (coefficient) ของพจน์ปฏิสัมพันธ์ (interaction term) ในสมการนี้จะต้องมีค่าต่างจาก 0 อย่างมีนัยสำคัญ
+
+```{r}
+biomass_lm <- lm(AGB ~ D2H + clone + D2H:clone, data = biomass)
+biomass_ancova <- anova(biomass_lm)
+biomass_ancova
+```
+
+จากผลการวิเคราะห์ข้างต้น แสดงให้เห็นว่า
+
+-   ความแตกต่างระหว่าง clone ไม่มีนัยสำคัญที่ P = `` r round(biomass_ancova$`Pr(>F)`[2],3) ``
+
+-   ปฏิสัมพันธ์ระหว่าง D2H:clone ไม่มีนัยสำคัญที่ P = `` r round(biomass_ancova$`Pr(>F)`[3],3) ``
+
+ดังนั้นข้อมูลจาก clone ทั้ง 4 ไม่มีความแตกต่างกันอย่างมนัยสำคัญ สามารถรวมข้อมูลเพื่อผลิตสมการเดียวกันได้เลย โดยจะได้สมการดังต่อไปนี้
+
+$$
+AGB = intercept + slope \times D^2H 
+$$
+
+Intercept และ slope จะมาจากการวิเคราะห์ linear regression ระหว่าง D2H และ AGB
+
+```{r}
+biomass_lm <- lm(AGB ~ D2H, data = biomass)
+summary(biomass_lm)
+```
+
+สมการที่ได้จึงเป็นดังนี้ โดยมี $R^2$ = 0.9424
+
+$$
+AGB = -0.479355 + 0.031584 D^2H
+$$
+
+และกราฟที่ได้จะเป็นภาพดังนี้
+
+```{r}
+ggplot(aes(x = D2H, y = AGB), data = biomass) +
+  geom_point() +
+  geom_smooth(method = "lm", se = F)
+```
